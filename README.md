@@ -487,4 +487,4 @@ Although it is possible to use these features, I recommend that you do not use t
 
 ## License
 
-[MIT License] (LICENSE)
+[MIT License](LICENSE)

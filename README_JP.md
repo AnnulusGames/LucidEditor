@@ -488,4 +488,4 @@ AnnulusGames.LucidTools.Editor.Experimental以下には、現在開発中のク�
 
 ## ライセンス
 
-[Mit License](LICENSE)
+[MIT License](LICENSE)
