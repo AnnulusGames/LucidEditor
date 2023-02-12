@@ -173,6 +173,11 @@ namespace AnnulusGames.LucidTools.Editor
                 if (!isEditable) EditorGUI.EndDisabledGroup();
 
                 _changed = changeScope.changed;
+
+                if (_changed)
+                {
+                    serializedObject.ApplyModifiedProperties();
+                }
             }
 
             foreach (PropertyProcessor processor in processors) processor.OnAfterDrawProperty();
