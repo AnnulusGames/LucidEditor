@@ -159,6 +159,8 @@ public class AttributeExample : MonoBehaviour
 
 利用可能な属性の一覧は、こちらから確認できます。
 
+[Attributes](https://github.com/AnnulusGames/LucidEditor/wiki/Attributes)
+
 ## インターフェース・抽象クラスを表示する
 Lucid Editorが有効な場合、SerializeReference属性を付加することでインターフェースや抽象クラスをInspector上で編集できるようになります。
 
