@@ -157,9 +157,7 @@ public class AttributeExample : MonoBehaviour
 }
 ```
 
-A list of available attributes can be found here.
-
-[Attributes](https://github.com/AnnulusGames/LucidEditor/wiki/Attributes)
+A list of available attributes can be found [here.](https://github.com/AnnulusGames/LucidEditor/wiki/Attributes)
 
 ## Edit interfaces/abstract classes
 You can edit interfaces and abstract classes on the Inspector by adding the SerializeReference attribute.
