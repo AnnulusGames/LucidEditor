@@ -1,0 +1,15 @@
+{
+    "name": "com.annulusgames.lucid-editor",
+    "displayName": "Lucid Editor",
+    "version": "1.0.0",
+    "unity": "2020.1",
+    "license": "MIT",
+    "author": {
+        "name": "Annulus Games",
+        "url": "https://github.com/AnnulusGames"
+    },
+    "description": "Powerful Editor Extensions for Unity",
+    "dependencies": {
+
+    }
+}
