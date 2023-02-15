@@ -59,7 +59,7 @@ namespace AnnulusGames.LucidTools.Editor
         {
             var list = new List<InspectorProperty>();
 
-            foreach (MemberInfo memberInfo in ReflectionUtil.GetAllMembers(targetObject))
+            foreach (MemberInfo memberInfo in ReflectionUtil.GetAllMembers(targetObject.GetType(), (BindingFlags)(-1), inherit: true))
             {
                 if (memberInfo is FieldInfo fieldInfo)
                 {
@@ -89,6 +89,7 @@ namespace AnnulusGames.LucidTools.Editor
                 }
                 else if (memberInfo is MethodInfo methodInfo)
                 {
+                    Debug.Log(targetObject.GetType() + ":" + memberInfo.Name);
                     ShowInInspectorAttribute showInInspector = methodInfo.GetCustomAttribute<ShowInInspectorAttribute>();
                     if (showInInspector != null)
                     {

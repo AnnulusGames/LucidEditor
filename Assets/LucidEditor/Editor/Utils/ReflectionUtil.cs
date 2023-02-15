@@ -2,15 +2,17 @@ using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace AnnulusGames.LucidTools.Editor
 {
     internal static class ReflectionUtil
     {
-        private static Dictionary<(Type, string, BindingFlags), FieldInfo> cacheFieldInfo = new Dictionary<(Type, string, BindingFlags), FieldInfo>();
-        private static Dictionary<(object, BindingFlags), MemberInfo[]> cacheAllMembers = new Dictionary<(object, BindingFlags), MemberInfo[]>();
-        private static Dictionary<(object, BindingFlags), MethodInfo[]> cacheAllMethods = new Dictionary<(object, BindingFlags), MethodInfo[]>();
+        private static Dictionary<(Type, string, BindingFlags, bool), FieldInfo> cacheFieldInfo = new Dictionary<(Type, string, BindingFlags, bool), FieldInfo>();
+        private static Dictionary<(Type, string, BindingFlags, bool), PropertyInfo> cachePropertyInfo = new Dictionary<(Type, string, BindingFlags, bool), PropertyInfo>();
+        private static Dictionary<(Type, BindingFlags, bool), MemberInfo[]> cacheAllMembers = new Dictionary<(Type, BindingFlags, bool), MemberInfo[]>();
+        // private static Dictionary<(object, BindingFlags), MethodInfo[]> cacheAllMethods = new Dictionary<(object, BindingFlags), MethodInfo[]>();
 
         private static Dictionary<(object, string), Func<object>> cacheGetFieldValue = new Dictionary<(object, string), Func<object>>();
         private static Dictionary<(object, string), Func<object>> cacheGetPropertyValue = new Dictionary<(object, string), Func<object>>();
@@ -94,21 +96,60 @@ namespace AnnulusGames.LucidTools.Editor
             }
         }
 
-
-
-        public static FieldInfo GetField(Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        public static FieldInfo GetField(Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static, bool inherit = false)
         {
             FieldInfo info;
-            if (cacheFieldInfo.ContainsKey((type, name, bindingAttr)))
+            if (cacheFieldInfo.ContainsKey((type, name, bindingAttr, inherit)))
             {
-                info = cacheFieldInfo[(type, name, bindingAttr)];
+                info = cacheFieldInfo[(type, name, bindingAttr, inherit)];
             }
             else
             {
-                info = type.GetField(name, bindingAttr);
-                cacheFieldInfo.Add((type, name, bindingAttr), info);
+                if (inherit)
+                {
+                    info = GetAllFieldsIncludingInherited(type, bindingAttr).FirstOrDefault(x => x.Name == name);
+                }
+                else
+                {
+                    info = type.GetField(name, bindingAttr);
+                }
+                cacheFieldInfo.Add((type, name, bindingAttr, inherit), info);
             }
             return info;
+        }
+
+        private static IEnumerable<FieldInfo> GetAllFieldsIncludingInherited(Type type, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        {
+            if (type == null) return Enumerable.Empty<FieldInfo>();
+            return type.GetFields(bindingAttr).Concat(GetAllFieldsIncludingInherited(type.BaseType));
+        }
+
+        public static PropertyInfo GetProperty(Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static, bool inherit = false)
+        {
+            PropertyInfo info;
+            if (cachePropertyInfo.ContainsKey((type, name, bindingAttr, inherit)))
+            {
+                info = cachePropertyInfo[(type, name, bindingAttr, inherit)];
+            }
+            else
+            {
+                if (inherit)
+                {
+                    info = GetAllPropertiesIncludingInherited(type, bindingAttr).FirstOrDefault(x => x.Name == name);
+                }
+                else
+                {
+                    info = type.GetProperty(name, bindingAttr);
+                }
+                cachePropertyInfo.Add((type, name, bindingAttr, inherit), info);
+            }
+            return info;
+        }
+
+        private static IEnumerable<PropertyInfo> GetAllPropertiesIncludingInherited(Type type, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        {
+            if (type == null) return Enumerable.Empty<PropertyInfo>();
+            return type.GetProperties(bindingAttr).Concat(GetAllPropertiesIncludingInherited(type.BaseType));
         }
 
         public static object GetValue(object target, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static, bool allowProperty = true, bool allowMethod = true)
@@ -161,33 +202,47 @@ namespace AnnulusGames.LucidTools.Editor
             return false;
         }
 
-        public static MemberInfo[] GetAllMembers(object target, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        public static MemberInfo[] GetAllMembers(Type type, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static, bool inherit = false)
         {
-            if (cacheAllMembers.ContainsKey((target, bindingAttr)))
+            if (cacheAllMembers.ContainsKey((type, bindingAttr, inherit)))
             {
-                return cacheAllMembers[(target, bindingAttr)];
+                return cacheAllMembers[(type, bindingAttr, inherit)];
             }
             else
             {
-                MemberInfo[] memberInfos = target.GetType().GetMembers(bindingAttr);
-                cacheAllMembers.Add((target, bindingAttr), memberInfos);
+                MemberInfo[] memberInfos;
+                if (inherit)
+                {
+                    memberInfos = GetAllMembersIncludingInherited(type, bindingAttr).ToArray();
+                }
+                else
+                {
+                    memberInfos = type.GetMembers(bindingAttr);
+                }
+                cacheAllMembers.Add((type, bindingAttr, inherit), memberInfos);
                 return memberInfos;
             }
         }
 
-        public static MethodInfo[] GetAllMethods(object target, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        private static IEnumerable<MemberInfo> GetAllMembersIncludingInherited(Type type, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
         {
-            if (cacheAllMethods.ContainsKey((target, bindingAttr)))
-            {
-                return cacheAllMethods[(target, bindingAttr)];
-            }
-            else
-            {
-                MethodInfo[] methodInfos = target.GetType().GetMethods(bindingAttr);
-                cacheAllMethods.Add((target, bindingAttr), methodInfos);
-                return methodInfos;
-            }
+            if (type == null) return Enumerable.Empty<MemberInfo>();
+            return type.GetMembers(bindingAttr).Concat(GetAllMembersIncludingInherited(type.BaseType));
         }
+
+        // public static MethodInfo[] GetAllMethods(object target, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+        // {
+        //     if (cacheAllMethods.ContainsKey((target, bindingAttr)))
+        //     {
+        //         return cacheAllMethods[(target, bindingAttr)];
+        //     }
+        //     else
+        //     {
+        //         MethodInfo[] methodInfos = target.GetType().GetMethods(bindingAttr);
+        //         cacheAllMethods.Add((target, bindingAttr), methodInfos);
+        //         return methodInfos;
+        //     }
+        // }
 
         public static object Invoke(object target, string name, params object[] parameters)
         {

@@ -38,7 +38,7 @@ namespace AnnulusGames.LucidTools.Editor
 
             foreach (var pathSegment in property.propertyPath.Split('.'))
             {
-                FieldInfo fieldInfo = targetObjectType.GetField(pathSegment, (BindingFlags)(-1));
+                FieldInfo fieldInfo = ReflectionUtil.GetField(targetObjectType, pathSegment, (BindingFlags)(-1), inherit);
                 if (fieldInfo != null)
                 {
                     return (TAttribute)fieldInfo.GetCustomAttribute<TAttribute>(inherit);
@@ -70,13 +70,13 @@ namespace AnnulusGames.LucidTools.Editor
 
             foreach (var pathSegment in property.propertyPath.Split('.'))
             {
-                FieldInfo fieldInfo = targetObjectType.GetField(pathSegment, (BindingFlags)(-1));
+                FieldInfo fieldInfo = ReflectionUtil.GetField(targetObjectType, pathSegment, (BindingFlags)(-1), true);
                 if (fieldInfo != null)
                 {
                     return (TAttribute[])fieldInfo.GetCustomAttributes<TAttribute>(inherit);
                 }
 
-                PropertyInfo propertyInfo = targetObjectType.GetProperty(pathSegment, (BindingFlags)(-1));
+                PropertyInfo propertyInfo = ReflectionUtil.GetProperty(targetObjectType, pathSegment, (BindingFlags)(-1), true);
                 if (propertyInfo != null)
                 {
                     return (TAttribute[])propertyInfo.GetCustomAttributes<TAttribute>(inherit);
