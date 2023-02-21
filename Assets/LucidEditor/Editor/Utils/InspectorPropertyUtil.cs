@@ -89,7 +89,6 @@ namespace AnnulusGames.LucidTools.Editor
                 }
                 else if (memberInfo is MethodInfo methodInfo)
                 {
-                    Debug.Log(targetObject.GetType() + ":" + memberInfo.Name);
                     ShowInInspectorAttribute showInInspector = methodInfo.GetCustomAttribute<ShowInInspectorAttribute>();
                     if (showInInspector != null)
                     {
