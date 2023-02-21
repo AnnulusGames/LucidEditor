@@ -217,6 +217,8 @@ namespace AnnulusGames.LucidTools.Editor
 
         public static object GetParentObject(this SerializedProperty property)
         {
+            if (property == null) return null;
+
             var path = property.propertyPath.Replace(".Array.data[", "[");
             object obj = property.serializedObject.targetObject;
             var elements = path.Split('.');

@@ -20,8 +20,17 @@ namespace AnnulusGames.LucidTools.Editor
                     foreach (CustomPropertyDrawer customAttribute in drawer.GetCustomAttributes(typeof(CustomPropertyDrawer), true))
                     {
                         var field = customAttribute.GetType().GetField("m_Type", BindingFlags.NonPublic | BindingFlags.Instance);
+                        var useForChildren = customAttribute.GetType().GetField("m_UseForChildren", BindingFlags.NonPublic | BindingFlags.Instance);
                         var t = (Type)field.GetValue(customAttribute);
-                        cacheCustomDrawerTypes.Add(t);
+                        
+                        if (!cacheCustomDrawerTypes.Contains(t)) cacheCustomDrawerTypes.Add(t);
+                        if ((bool)useForChildren.GetValue(customAttribute))
+                        {
+                            foreach (var d in Assembly.GetAssembly(t).GetTypes().Where(x => x.IsSubclassOf(t)))
+                            {
+                                if (!cacheCustomDrawerTypes.Contains(d)) cacheCustomDrawerTypes.Add(d);
+                            }
+                        }
                     }
                 }
             }
