@@ -59,6 +59,11 @@ namespace AnnulusGames.LucidTools.Editor
         {
             var list = new List<InspectorProperty>();
 
+            if(targetObject == null)
+            {
+                return list;
+            }
+
             foreach (MemberInfo memberInfo in ReflectionUtil.GetAllMembers(targetObject.GetType(), (BindingFlags)(-1), inherit: true))
             {
                 if (memberInfo is FieldInfo fieldInfo)
