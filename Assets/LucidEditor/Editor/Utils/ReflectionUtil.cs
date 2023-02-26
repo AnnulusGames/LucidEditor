@@ -12,88 +12,100 @@ namespace AnnulusGames.LucidTools.Editor
         private static Dictionary<(Type, string, BindingFlags, bool), FieldInfo> cacheFieldInfo = new Dictionary<(Type, string, BindingFlags, bool), FieldInfo>();
         private static Dictionary<(Type, string, BindingFlags, bool), PropertyInfo> cachePropertyInfo = new Dictionary<(Type, string, BindingFlags, bool), PropertyInfo>();
         private static Dictionary<(Type, BindingFlags, bool), MemberInfo[]> cacheAllMembers = new Dictionary<(Type, BindingFlags, bool), MemberInfo[]>();
-        // private static Dictionary<(object, BindingFlags), MethodInfo[]> cacheAllMethods = new Dictionary<(object, BindingFlags), MethodInfo[]>();
 
-        private static Dictionary<(object, string), Func<object>> cacheGetFieldValue = new Dictionary<(object, string), Func<object>>();
-        private static Dictionary<(object, string), Func<object>> cacheGetPropertyValue = new Dictionary<(object, string), Func<object>>();
-        private static Dictionary<(object, string), Func<object>> cacheGetMethodValue = new Dictionary<(object, string), Func<object>>();
+        private static Dictionary<(Type, string), Func<object, object>> cacheGetFieldValue = new Dictionary<(Type, string), Func<object, object>>();
+        private static Dictionary<(Type, string), Func<object, object>> cacheGetPropertyValue = new Dictionary<(Type, string), Func<object, object>>();
+        private static Dictionary<(Type, string), Func<object, object>> cacheGetMethodValue = new Dictionary<(Type, string), Func<object, object>>();
+
+        public static Func<object, object> CreateGetter(FieldInfo fieldInfo)
+        {
+            if (fieldInfo == null) return null;
+            if (fieldInfo.IsStatic)
+            {
+                Expression body = Expression.Convert(Expression.MakeMemberAccess(null, fieldInfo), typeof(object));
+                var lambda = Expression.Lambda<Func<object>>(body).Compile();
+                return _ => lambda();
+            }
+            if (fieldInfo.DeclaringType != null)
+            {
+                var objParam = Expression.Parameter(typeof(object), "obj");
+                var tParam = Expression.Convert(objParam, fieldInfo.DeclaringType);
+                Expression body = Expression.Convert(Expression.MakeMemberAccess(tParam, fieldInfo), typeof(object));
+                return Expression.Lambda<Func<object, object>>(body, objParam).Compile();
+            }
+            return null;
+        }
+        public static Func<object, object> CreateGetter(PropertyInfo propertyInfo)
+        {
+            if (propertyInfo == null) return null;
+            if (propertyInfo.GetGetMethod(true).IsStatic)
+            {
+                Expression body = Expression.Convert(Expression.MakeMemberAccess(null, propertyInfo), typeof(object));
+                var lambda = Expression.Lambda<Func<object>>(body).Compile();
+                return _ => lambda();
+            }
+            if (propertyInfo.DeclaringType != null)
+            {
+                var objParam = Expression.Parameter(typeof(object), "obj");
+                var tParam = Expression.Convert(objParam, propertyInfo.DeclaringType);
+                Expression body = Expression.Convert(Expression.MakeMemberAccess(tParam, propertyInfo), typeof(object));
+                return Expression.Lambda<Func<object, object>>(body, objParam).Compile();
+            }
+            return null;
+        }
+        public static Func<object, object> CreateGetter(MethodInfo methodInfo)
+        {
+            if (methodInfo == null) return null;
+            if (methodInfo.IsStatic)
+            {
+                Expression body = Expression.Convert(Expression.Call(null, methodInfo), typeof(object));
+                var lambda = Expression.Lambda<Func<object>>(body).Compile();
+                return _ => lambda();
+            }
+            if (methodInfo.DeclaringType != null)
+            {
+                var objParam = Expression.Parameter(typeof(object), "obj");
+                var tParam = Expression.Convert(objParam, methodInfo.DeclaringType);
+                Expression body = Expression.Convert(Expression.Call(tParam, methodInfo), typeof(object));
+                return Expression.Lambda<Func<object, object>>(body, objParam).Compile();
+            }
+            return null;
+        }
 
         public static object GetFieldValue(object target, Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
         {
-            if (cacheGetFieldValue.ContainsKey((target, name)))
-            {
-                if (cacheGetFieldValue[(target, name)] == null) return null;
-                else return cacheGetFieldValue[(target, name)].Invoke();
-            }
-            else
+            if (!cacheGetFieldValue.ContainsKey((type, name)))
             {
                 FieldInfo info = type.GetField(name, bindingAttr);
-                if (info == null)
-                {
-                    cacheGetFieldValue.Add((target, name), null);
-                    return null;
-                }
-
-                var lambda = Expression.Lambda<Func<object>>(
-                    Expression.Convert(Expression.Field(info.IsStatic ? null : Expression.Constant(target), info), typeof(object))
-                );
-
-                cacheGetFieldValue.Add((target, name), lambda.Compile());
-
-                return cacheGetFieldValue[(target, name)].Invoke();
+                cacheGetFieldValue.Add((type, name), CreateGetter(info));
             }
+
+            if (cacheGetFieldValue[(type, name)] == null) return null;
+            else return cacheGetFieldValue[(type, name)].Invoke(target);
         }
 
         public static object GetPropertyValue(object target, Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
         {
-            if (cacheGetPropertyValue.ContainsKey((target, name)))
-            {
-                if (cacheGetPropertyValue[(target, name)] == null) return null;
-                else return cacheGetPropertyValue[(target, name)].Invoke();
-            }
-            else
+            if (!cacheGetPropertyValue.ContainsKey((type, name)))
             {
                 PropertyInfo info = type.GetProperty(name, bindingAttr);
-                if (info == null)
-                {
-                    cacheGetPropertyValue.Add((target, name), null);
-                    return null;
-                }
-
-                var lambda = Expression.Lambda<Func<object>>(
-                    Expression.Convert(Expression.Property(info.GetGetMethod(true).IsStatic ? null : Expression.Constant(target), info), typeof(object))
-                );
-
-                cacheGetPropertyValue.Add((target, name), lambda.Compile());
-
-                return cacheGetPropertyValue[(target, name)].Invoke();
+                cacheGetPropertyValue.Add((type, name), CreateGetter(info));
             }
+            
+            if (cacheGetPropertyValue[(type, name)] == null) return null;
+            else return cacheGetPropertyValue[(type, name)].Invoke(target);
         }
 
         public static object GetMethodValue(object target, Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
         {
-            if (cacheGetMethodValue.ContainsKey((target, name)))
-            {
-                if (cacheGetMethodValue[(target, name)] == null) return null;
-                else return cacheGetMethodValue[(target, name)].Invoke();
-            }
-            else
+            if (!cacheGetMethodValue.ContainsKey((type, name)))
             {
                 MethodInfo info = type.GetMethod(name, bindingAttr);
-                if (info == null)
-                {
-                    cacheGetMethodValue.Add((target, name), null);
-                    return null;
-                }
-
-                var lambda = Expression.Lambda<Func<object>>(
-                    Expression.Convert(Expression.Call(info.IsStatic ? null : Expression.Constant(target), info), typeof(object))
-                );
-
-                cacheGetMethodValue.Add((target, name), lambda.Compile());
-
-                return cacheGetMethodValue[(target, name)].Invoke();
+                cacheGetMethodValue.Add((type, name), CreateGetter(info));
             }
+
+            if (cacheGetMethodValue[(type, name)] == null) return null;
+            else return cacheGetMethodValue[(type, name)].Invoke(target);
         }
 
         public static FieldInfo GetField(Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static, bool inherit = false)
@@ -229,20 +241,6 @@ namespace AnnulusGames.LucidTools.Editor
             if (type == null) return Enumerable.Empty<MemberInfo>();
             return type.GetMembers(bindingAttr).Concat(GetAllMembersIncludingInherited(type.BaseType));
         }
-
-        // public static MethodInfo[] GetAllMethods(object target, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
-        // {
-        //     if (cacheAllMethods.ContainsKey((target, bindingAttr)))
-        //     {
-        //         return cacheAllMethods[(target, bindingAttr)];
-        //     }
-        //     else
-        //     {
-        //         MethodInfo[] methodInfos = target.GetType().GetMethods(bindingAttr);
-        //         cacheAllMethods.Add((target, bindingAttr), methodInfos);
-        //         return methodInfos;
-        //     }
-        // }
 
         public static object Invoke(object target, string name, params object[] parameters)
         {
