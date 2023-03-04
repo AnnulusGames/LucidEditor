@@ -74,38 +74,32 @@ namespace AnnulusGames.LucidTools.Editor
 
         public static object GetFieldValue(object target, Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
         {
-            if (!cacheGetFieldValue.ContainsKey((type, name)))
+            if (!cacheGetFieldValue.TryGetValue((type, name), out var value))
             {
                 FieldInfo info = type.GetField(name, bindingAttr);
                 cacheGetFieldValue.Add((type, name), CreateGetter(info));
             }
-
-            if (cacheGetFieldValue[(type, name)] == null) return null;
-            else return cacheGetFieldValue[(type, name)].Invoke(target);
+            return value?.Invoke(target);
         }
 
         public static object GetPropertyValue(object target, Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
         {
-            if (!cacheGetPropertyValue.ContainsKey((type, name)))
+            if (!cacheGetPropertyValue.TryGetValue((type, name), out var value))
             {
                 PropertyInfo info = type.GetProperty(name, bindingAttr);
                 cacheGetPropertyValue.Add((type, name), CreateGetter(info));
             }
-            
-            if (cacheGetPropertyValue[(type, name)] == null) return null;
-            else return cacheGetPropertyValue[(type, name)].Invoke(target);
+            return value?.Invoke(target);
         }
 
         public static object GetMethodValue(object target, Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
         {
-            if (!cacheGetMethodValue.ContainsKey((type, name)))
+            if (!cacheGetMethodValue.TryGetValue((type, name), out var value))
             {
                 MethodInfo info = type.GetMethod(name, bindingAttr);
                 cacheGetMethodValue.Add((type, name), CreateGetter(info));
             }
-
-            if (cacheGetMethodValue[(type, name)] == null) return null;
-            else return cacheGetMethodValue[(type, name)].Invoke(target);
+            return value?.Invoke(target);
         }
 
         public static FieldInfo GetField(Type type, string name, BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static, bool inherit = false)
