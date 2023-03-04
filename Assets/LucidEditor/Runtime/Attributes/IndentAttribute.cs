@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace AnnulusGames.LucidTools.Inspector
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     public class IndentAttribute : Attribute
     {
         public readonly int indent;

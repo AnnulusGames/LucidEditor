@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace AnnulusGames.LucidTools.Inspector
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Method, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method, AllowMultiple = true)]
     public class HelpBoxAttribute : Attribute
     {
         public readonly string message;
