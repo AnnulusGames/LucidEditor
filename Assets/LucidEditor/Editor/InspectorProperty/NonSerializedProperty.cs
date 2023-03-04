@@ -35,7 +35,8 @@ namespace AnnulusGames.LucidTools.Editor
             if (!isEditable) EditorGUI.BeginDisabledGroup(true);
             {
                 object value = ReflectionUtil.GetValue(parentObject, name);
-                LucidEditorGUILayout.ReadOnlyField(name, value, value.GetType());
+                if (value == null) EditorGUILayout.LabelField(name);
+                else LucidEditorGUILayout.ReadOnlyField(name, value, value.GetType());
             }
             if (!isEditable) EditorGUI.EndDisabledGroup();
             LucidEditorGUILayout.EndLayoutIndent();

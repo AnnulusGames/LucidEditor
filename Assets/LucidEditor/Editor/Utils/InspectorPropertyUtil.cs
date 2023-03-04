@@ -59,7 +59,7 @@ namespace AnnulusGames.LucidTools.Editor
         {
             var list = new List<InspectorProperty>();
 
-            if(targetObject == null)
+            if (targetObject == null)
             {
                 return list;
             }
@@ -79,16 +79,13 @@ namespace AnnulusGames.LucidTools.Editor
                 }
                 else if (memberInfo is PropertyInfo propertyInfo)
                 {
-                    MethodInfo getterInfo = propertyInfo.GetGetMethod();
+                    MethodInfo getterInfo = propertyInfo.GetGetMethod(true);
                     if (getterInfo != null)
                     {
-                        if (getterInfo.IsPublic || propertyInfo.GetCustomAttribute<SerializeField>() == null)
+                        ShowInInspectorAttribute showInInspector = propertyInfo.GetCustomAttribute<ShowInInspectorAttribute>();
+                        if (showInInspector != null)
                         {
-                            ShowInInspectorAttribute showInInspector = propertyInfo.GetCustomAttribute<ShowInInspectorAttribute>();
-                            if (showInInspector != null)
-                            {
-                                list.Add(new NonSerializedInspectorProperty(serializedObject, targetObject, propertyInfo.Name, propertyInfo.GetCustomAttributes().ToArray()));
-                            }
+                            list.Add(new NonSerializedInspectorProperty(serializedObject, targetObject, propertyInfo.Name, propertyInfo.GetCustomAttributes().ToArray()));
                         }
                     }
                 }
