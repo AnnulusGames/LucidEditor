@@ -161,7 +161,7 @@ namespace AnnulusGames.LucidTools.Editor
         internal LocalPersistentData(string key)
         {
             this.key = key;
-            value = LucidEditorPrefs.Get<T>(key);
+            value = LucidEditorPrefs.GetConfigValue<T>(key);
         }
 
         private string key;
@@ -178,7 +178,7 @@ namespace AnnulusGames.LucidTools.Editor
             {
                 if (!comparer.Equals(this.value, value))
                 {
-                    LucidEditorPrefs.Set<T>(key, value);
+                    LucidEditorPrefs.SetConfigValue<T>(key, value);
                 }
                 this.value = value;
             }
