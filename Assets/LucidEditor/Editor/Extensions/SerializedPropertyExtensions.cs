@@ -65,7 +65,7 @@ namespace AnnulusGames.LucidTools.Editor
 
             if (targetObjectType == null)
             {
-                throw new ArgumentException($"Could not find the {nameof(targetObjectType)} of {nameof(property)}");
+                return Enumerable.Empty<TAttribute>().ToArray();
             }
 
             foreach (var pathSegment in property.propertyPath.Split('.'))
@@ -83,7 +83,7 @@ namespace AnnulusGames.LucidTools.Editor
                 }
             }
 
-            throw new ArgumentException($"Could not find the field or property of {nameof(property)}");
+            return Enumerable.Empty<TAttribute>().ToArray();
         }
 
         public static float GetHeight(this SerializedProperty property)
