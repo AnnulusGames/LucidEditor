@@ -23,7 +23,10 @@ namespace AnnulusGames.LucidTools.Editor
                         var useForChildren = customAttribute.GetType().GetField("m_UseForChildren", BindingFlags.NonPublic | BindingFlags.Instance);
                         var t = (Type)field.GetValue(customAttribute);
                         
-                        if (!cacheCustomDrawerTypes.Contains(t)) cacheCustomDrawerTypes.Add(t);
+                        if (!cacheCustomDrawerTypes.Contains(t))
+                        {
+                            cacheCustomDrawerTypes.Add(t);
+                        }
                         if ((bool)useForChildren.GetValue(customAttribute))
                         {
                             foreach (var d in Assembly.GetAssembly(t).GetTypes().Where(x => x.IsSubclassOf(t)))

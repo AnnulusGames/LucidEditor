@@ -30,11 +30,12 @@ namespace AnnulusGames.LucidTools.Editor
         public static IEnumerable<InspectorProperty> CreateChildProperties(InspectorField property)
         {
             var list = new List<InspectorProperty>();
+            var pType = property.serializedProperty.GetFieldInfo()?.FieldType;
 
             if (property.serializedProperty.hasVisibleChildren &&
                 (property.serializedProperty.propertyType == SerializedPropertyType.Generic || property.serializedProperty.propertyType == SerializedPropertyType.ManagedReference) &&
                 !property.serializedProperty.isArray &&
-                !TypeUtil.HasCustomDrawerType(TypeUtil.GetType(property.serializedProperty.type)))
+                (pType != null ? !TypeUtil.HasCustomDrawerType(pType.IsGenericType ? pType.GetGenericTypeDefinition() : pType) : true))
             {
                 var iterator = property.serializedProperty.Copy();
 
