@@ -104,11 +104,11 @@ namespace AnnulusGames.LucidTools.Editor
                         InspectorButton ib;
                         if (string.IsNullOrEmpty(buttonAttribute.label))
                         {
-                            ib = new InspectorButton(serializedObject, serializedObject.targetObject, methodInfo, buttonAttribute.size);
+                            ib = new InspectorButton(serializedObject, targetObject, methodInfo, buttonAttribute.size);
                         }
                         else
                         {
-                            ib = new InspectorButton(serializedObject, serializedObject.targetObject, methodInfo, buttonAttribute.label, buttonAttribute.size);
+                            ib = new InspectorButton(serializedObject, targetObject, methodInfo, buttonAttribute.label, buttonAttribute.size);
                         }
                         list.Add(ib);
                     }
