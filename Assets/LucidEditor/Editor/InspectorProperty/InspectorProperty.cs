@@ -7,7 +7,7 @@ namespace AnnulusGames.LucidTools.Editor
     {
         public readonly SerializedObject serializedObject;
         public readonly SerializedProperty serializedProperty;
-        public readonly object parentObject;
+        public object parentObject { get; internal set; }
         public readonly string name;
 
         public readonly Attribute[] attributes;

@@ -41,6 +41,20 @@ namespace AnnulusGames.LucidTools.Editor
             }
         }
 
+        public GUIStyle foldoutHeaderStyle
+        {
+            get
+            {
+                if (_foldoutHeaderStyle == null)
+                {
+                    _foldoutHeaderStyle = new GUIStyle(EditorStyles.foldout);
+                    _foldoutHeaderStyle.fontStyle = FontStyle.Bold;
+                }
+                return _foldoutHeaderStyle;
+            }
+        }
+        private GUIStyle _foldoutHeaderStyle;
+
         internal InspectorField(SerializedProperty property, Attribute[] attributes) : base(property.serializedObject, property, property.GetParentObject(), property.name, attributes)
         {
             this.displayName = property.displayName;
@@ -49,7 +63,23 @@ namespace AnnulusGames.LucidTools.Editor
 
         internal void InitializeChildProperties()
         {
-            _childProperties = InspectorPropertyUtil.GroupProperties(InspectorPropertyUtil.CreateChildProperties(this));
+            if (isArray)
+            {
+                _childProperties = new List<InspectorProperty>();
+                serializedObject.Update();
+                for (int i = 0; i < serializedProperty.arraySize; i++)
+                {
+                    var element = serializedProperty.GetArrayElementAtIndex(i);
+                    var field = InspectorPropertyUtil.CreatePropertyField(element);
+                    _childProperties.Add(field);
+                }
+            }
+            else
+            {
+                _childProperties = InspectorPropertyUtil.GroupProperties(InspectorPropertyUtil.CreateChildProperties(this));
+            }
+
+            foreach (var child in _childProperties) child.Initialize();
         }
 
         internal override void Initialize()
@@ -120,53 +150,43 @@ namespace AnnulusGames.LucidTools.Editor
 
         private void DrawField()
         {
-            Rect foldoutRect = Rect.zero;
-            if (isManagedReference)
+            if (isArray)
             {
-                foldoutRect = EditorGUILayout.GetControlRect();
-                DrawSerializeReferenceField(foldoutRect, this);
-
-                if (!hasChildren)
-                {
-                    serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
-                    if (serializedProperty.isExpanded)
-                    {
-                        using (new EditorGUI.IndentLevelScope())
-                        {
-                            EditorGUILayout.HelpBox("No type assigned.", MessageType.Info);
-                        }
-                    }
-                }
+                DrawArrayField(serializedProperty, !TryGetAttribute<NonReorderableAttribute>(out var nonReorderableAttribute));
             }
-            if (hasChildren)
+            else if (isManagedReference)
             {
-                if (!isManagedReference) foldoutRect = EditorGUILayout.GetControlRect();
+                DrawSerializeReferenceField();
+            }
+            else if (hasChildren)
+            {
+                Rect foldoutRect = EditorGUILayout.GetControlRect();
 
                 if (_isInGroup)
                 {
                     using (new EditorGUI.IndentLevelScope())
                     {
                         foldoutRect.xMin -= 4f;
-                        serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
+                        serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, foldoutHeaderStyle);
                     }
                 }
                 else
                 {
-                    serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
+                    serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, foldoutHeaderStyle);
                 }
 
                 if (serializedProperty.isExpanded)
                 {
                     using (new EditorGUI.IndentLevelScope())
                     {
-                        foreach (var child in childProperties.OrderBy(x => x.order))
+                        foreach (var child in _childProperties.OrderBy(x => x.order))
                         {
                             child.Draw();
                         }
                     }
                 }
             }
-            else if (!isManagedReference)
+            else
             {
                 if (_isInGroup && serializedProperty.isArray && serializedProperty.propertyType != SerializedPropertyType.String) EditorGUI.indentLevel++;
 
@@ -199,18 +219,128 @@ namespace AnnulusGames.LucidTools.Editor
         {
             EditorGUILayout.PropertyField(serializedProperty, label, true, GUILayout.MinWidth(0f));
         }
-        private void DrawSerializeReferenceField(Rect position, InspectorField property)
+
+        private void DrawArrayField(SerializedProperty property, bool reordable)
         {
+            // TODO: support reordable list
+            if (reordable)
+            {
+                LucidEditorUtility.PushIndentLevel(EditorGUI.indentLevel + 1);
+                DrawNormalField(property, new GUIContent(displayName));
+                LucidEditorUtility.PopIndentLevel();
+                return;
+            }
+
+            var reorderableList = GetArrayReordableList(property);
+            Rect position = EditorGUILayout.GetControlRect();
+
+            Rect foldoutRect = position;
+            foldoutRect.xMax -= 60f;
+            if (_isInGroup)
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    foldoutRect.xMin -= 4f;
+                    property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, displayName, true, foldoutHeaderStyle);
+                }
+            }
+            else
+            {
+                property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, displayName, true, foldoutHeaderStyle);
+            }
+
+            Rect arraySizeFieldRect = position;
+            arraySizeFieldRect.width = 48;
+            arraySizeFieldRect.x = position.xMax - 48f;
+
+            int arraySize = EditorGUI.DelayedIntField(arraySizeFieldRect, property.arraySize);
+            if (arraySize != property.arraySize)
+            {
+                property.arraySize = arraySize;
+                serializedObject.ApplyModifiedProperties();
+                InitializeChildProperties();
+            }
+
+            // if (reordable)
+            // {
+            //     if (property.isExpanded)
+            //     {
+            //         reorderableList.DoLayoutList();
+            //     }
+            // }
+            // else
+            {
+                if (_isInGroup) LucidEditorUtility.PushIndentLevel(EditorGUI.indentLevel + 2);
+                else LucidEditorUtility.PushIndentLevel(EditorGUI.indentLevel + 1);
+
+                if (property.isExpanded)
+                {
+                    if (arraySize == 0)
+                    {
+                        EditorGUILayout.HelpBox("Array size is 0", MessageType.Info);
+                    }
+                    else
+                    {
+                        foreach (var child in _childProperties.OrderBy(x => x.order))
+                        {
+                            child.Draw();
+                        }
+                    }
+                }
+
+                LucidEditorUtility.PopIndentLevel();
+            }
+        }
+
+        private ReorderableList GetArrayReordableList(SerializedProperty property)
+        {
+            if (!reorderableListCache.TryGetValue(property, out var reorderableList))
+            {
+                reorderableList = new ReorderableList(property.serializedObject, property);
+                reorderableList.headerHeight = 0;
+                reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
+                {
+                    GUILayout.BeginArea(rect);
+                    _childProperties[index].Draw();
+                    GUILayout.EndArea();
+                };
+                reorderableList.onAddCallback = list =>
+                {
+                    property.InsertArrayElementAtIndex(property.arraySize);
+                    InitializeChildProperties();
+                };
+                reorderableList.onRemoveCallback = list =>
+                {
+                    property.DeleteArrayElementAtIndex(list.index);
+                    InitializeChildProperties();
+                };
+                reorderableList.multiSelect = true;
+                reorderableList.onCanAddCallback = _ => true;
+                reorderableList.onCanRemoveCallback = _ => true;
+
+                reorderableListCache.Add(property, reorderableList);
+            }
+
+            return reorderableList;
+        }
+
+        private void DrawSerializeReferenceField()
+        {
+            InspectorField property = this;
+            Rect position = EditorGUILayout.GetControlRect();
+
+            // dropdown -----------------------------------------------------------------------------------
             int maxTypePopupLineCount = 13;
 
-            position.height = EditorGUIUtility.singleLineHeight;
-            position.xMin += EditorGUIUtility.labelWidth;
+            Rect dropdownRect = position;
+            dropdownRect.height = EditorGUIUtility.singleLineHeight;
+            dropdownRect.xMin += EditorGUIUtility.labelWidth;
 
             GUIContent buttonLabel = EditorIcons.CsScriptIcon;
             buttonLabel.text = (property.serializedProperty.managedReferenceValue == null ? "Null" : property.serializedProperty.managedReferenceValue.GetType().Name) +
                 $" ({GetManagedReferenceFieldTypeName(property.serializedProperty)})";
 
-            if (GUI.Button(position, buttonLabel, EditorStyles.objectField))
+            if (GUI.Button(dropdownRect, buttonLabel, EditorStyles.objectField))
             {
                 Type baseType = GetManagedReferenceFieldType(property.serializedProperty);
                 SerializeReferenceDropdown dropdown = new SerializeReferenceDropdown(
@@ -236,6 +366,39 @@ namespace AnnulusGames.LucidTools.Editor
                 };
 
                 dropdown.Show(position);
+            }
+
+            // elements -----------------------------------------------------------------------------------
+
+            if (_isInGroup)
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    position.xMin -= 4f;
+                    serializedProperty.isExpanded = EditorGUI.Foldout(position, serializedProperty.isExpanded, displayName, true, foldoutHeaderStyle);
+                }
+            }
+            else
+            {
+                serializedProperty.isExpanded = EditorGUI.Foldout(position, serializedProperty.isExpanded, displayName, true, foldoutHeaderStyle);
+            }
+
+            if (serializedProperty.isExpanded)
+            {
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    if (!hasChildren)
+                    {
+                        EditorGUILayout.HelpBox("No type assigned.", MessageType.Info);
+                    }
+                    else
+                    {
+                        foreach (var child in _childProperties.OrderBy(x => x.order))
+                        {
+                            child.Draw();
+                        }
+                    }
+                }
             }
         }
 

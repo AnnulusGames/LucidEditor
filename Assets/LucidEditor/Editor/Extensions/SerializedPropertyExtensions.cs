@@ -203,7 +203,8 @@ namespace AnnulusGames.LucidTools.Editor
                         index = -1;
                     }
 
-                    obj = Enumerable.ElementAt((obj as IEnumerable<object>), index);
+                    var enumerable = (obj as IEnumerable<object>);
+                    obj = enumerable.ElementAtOrDefault(index);
 
                     i++;
                 }
