@@ -210,19 +210,19 @@ namespace AnnulusGames.LucidTools.Editor
                     using (new EditorGUILayout.HorizontalScope())
                     {
                         GUILayout.Label(label, GUILayout.MinWidth(50f));
-                        DrawNormalField(serializedProperty, GUIContent.none);
+                        DrawNormalField(serializedProperty, GUIContent.none, GUILayout.MinWidth(0f));
                     }
                 }
                 else
                 {
-                    DrawNormalField(serializedProperty, label);
+                    DrawNormalField(serializedProperty, label, GUILayout.MinWidth(0f));
                 }
             }
         }
 
-        private void DrawNormalField(SerializedProperty property, GUIContent label)
+        private void DrawNormalField(SerializedProperty property, GUIContent label, params GUILayoutOption[] options)
         {
-            EditorGUILayout.PropertyField(serializedProperty, label, true, GUILayout.MinWidth(0f));
+            EditorGUILayout.PropertyField(serializedProperty, label, true, options);
         }
 
         private void DrawArrayField(SerializedProperty property, bool reordable)
@@ -230,7 +230,14 @@ namespace AnnulusGames.LucidTools.Editor
             // TODO: support reordable list
             if (reordable)
             {
-                using (new EditorGUI.IndentLevelScope())
+                if (_isInGroup)
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        DrawNormalField(property, new GUIContent(displayName));
+                    }
+                }
+                else
                 {
                     DrawNormalField(property, new GUIContent(displayName));
                 }
