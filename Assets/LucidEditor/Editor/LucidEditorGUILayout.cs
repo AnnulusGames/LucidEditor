@@ -486,6 +486,7 @@ namespace AnnulusGames.LucidTools.Editor
         {
             Rect position = EditorGUILayout.GetControlRect(options);
             Rect lineRect = position;
+            lineRect.xMin += EditorGUI.indentLevel * 15f;
             lineRect.y = position.yMax - 1;
             LucidEditorGUI.Line(lineRect, lineColor);
             EditorGUI.LabelField(position, label, EditorStyles.boldLabel);
@@ -496,6 +497,7 @@ namespace AnnulusGames.LucidTools.Editor
         {
             Rect position = EditorGUILayout.GetControlRect(options);
             Rect lineRect = position;
+            lineRect.xMin += EditorGUI.indentLevel * 15f;
             lineRect.y = position.yMax - 1;
             LucidEditorGUI.Line(lineRect, lineColor);
             EditorGUI.LabelField(position, label, EditorStyles.boldLabel);
@@ -525,6 +527,7 @@ namespace AnnulusGames.LucidTools.Editor
         public static void SectionHeader(string label, Color backgroundColor, Color lineColor, params GUILayoutOption[] options)
         {
             Rect position = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight + 5f, options);
+            position.xMin += EditorGUI.indentLevel * 15f;
             LucidEditorGUI.SectionHeader(position, label, backgroundColor, lineColor);
             Space(1);
         }
@@ -532,6 +535,7 @@ namespace AnnulusGames.LucidTools.Editor
         public static void SectionHeader(GUIContent label, Color backgroundColor, Color lineColor, params GUILayoutOption[] options)
         {
             Rect position = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight + 5f, options);
+            position.xMin += EditorGUI.indentLevel * 15f;
             LucidEditorGUI.SectionHeader(position, label, backgroundColor, lineColor);
             Space(1);
         }
