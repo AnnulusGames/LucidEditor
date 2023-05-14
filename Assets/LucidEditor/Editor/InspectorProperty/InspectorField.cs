@@ -38,7 +38,7 @@ namespace AnnulusGames.LucidTools.Editor
         {
             get
             {
-                return serializedProperty.isArray;
+                return serializedProperty.isArray && serializedProperty.propertyType != SerializedPropertyType.String;
             }
         }
 
@@ -195,8 +195,6 @@ namespace AnnulusGames.LucidTools.Editor
             }
             else
             {
-                if (_isInGroup && serializedProperty.isArray && serializedProperty.propertyType != SerializedPropertyType.String) EditorGUI.indentLevel++;
-
                 GUIContent label;
                 if (hideLabel)
                 {
@@ -232,9 +230,10 @@ namespace AnnulusGames.LucidTools.Editor
             // TODO: support reordable list
             if (reordable)
             {
-                LucidEditorUtility.PushIndentLevel(EditorGUI.indentLevel + 1);
-                DrawNormalField(property, new GUIContent(displayName));
-                LucidEditorUtility.PopIndentLevel();
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    DrawNormalField(property, new GUIContent(displayName));
+                }
                 return;
             }
 
