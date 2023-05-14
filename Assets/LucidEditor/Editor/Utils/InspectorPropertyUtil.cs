@@ -10,7 +10,12 @@ namespace AnnulusGames.LucidTools.Editor
 {
     internal static class InspectorPropertyUtil
     {
-        public static IEnumerable<InspectorProperty> CreateProperties(SerializedObject serializedObject)
+        public static InspectorField CreatePropertyField(SerializedProperty serializedProperty)
+        {
+            return new InspectorField(serializedProperty, serializedProperty.GetAttributes<Attribute>(true));
+        }
+
+        public static List<InspectorProperty> CreateProperties(SerializedObject serializedObject)
         {
             var list = new List<InspectorProperty>();
             SerializedProperty iterator = serializedObject.GetIterator();
@@ -18,7 +23,7 @@ namespace AnnulusGames.LucidTools.Editor
             iterator.NextVisible(true);
             while (iterator.NextVisible(false))
             {
-                InspectorField ip = new InspectorField(iterator.Copy(), iterator.GetAttributes<Attribute>(true));
+                InspectorField ip = CreatePropertyField(iterator.Copy());
                 list.Add(ip);
             }
 
@@ -27,7 +32,7 @@ namespace AnnulusGames.LucidTools.Editor
             return list;
         }
 
-        public static IEnumerable<InspectorProperty> CreateChildProperties(InspectorField property)
+        public static List<InspectorProperty> CreateChildProperties(InspectorField property)
         {
             var list = new List<InspectorProperty>();
             var pType = property.serializedProperty.GetFieldInfo()?.FieldType;
@@ -56,7 +61,7 @@ namespace AnnulusGames.LucidTools.Editor
             return list;
         }
 
-        public static IEnumerable<InspectorProperty> CreateButtonsAndNonSerializedProperties(SerializedObject serializedObject, object targetObject)
+        public static List<InspectorProperty> CreateButtonsAndNonSerializedProperties(SerializedObject serializedObject, object targetObject)
         {
             var list = new List<InspectorProperty>();
 
@@ -118,7 +123,7 @@ namespace AnnulusGames.LucidTools.Editor
             return list;
         }
 
-        public static IEnumerable<InspectorProperty> GroupProperties(IEnumerable<InspectorProperty> properties)
+        public static List<InspectorProperty> GroupProperties(IEnumerable<InspectorProperty> properties)
         {
             List<List<InspectorProperty>> groupList = new List<List<InspectorProperty>>();
 

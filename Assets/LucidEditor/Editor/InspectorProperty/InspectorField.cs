@@ -5,21 +5,23 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
+using UnityEditorInternal;
 
 namespace AnnulusGames.LucidTools.Editor
 {
     public class InspectorField : InspectorProperty
     {
-        public IReadOnlyList<InspectorProperty> childProperties => Array.AsReadOnly(_childProperties);
-        private InspectorProperty[] _childProperties;
+        public IReadOnlyList<InspectorProperty> childProperties => _childProperties.AsReadOnly();
+        private List<InspectorProperty> _childProperties;
 
         private List<PropertyProcessor> processors = new List<PropertyProcessor>();
+        private Dictionary<SerializedProperty, ReorderableList> reorderableListCache = new Dictionary<SerializedProperty, ReorderableList>();
 
         public bool hasChildren
         {
             get
             {
-                return _childProperties != null && _childProperties.Length > 0;
+                return _childProperties != null && _childProperties.Capacity > 0;
             }
         }
 
@@ -31,6 +33,14 @@ namespace AnnulusGames.LucidTools.Editor
             }
         }
 
+        public bool isArray
+        {
+            get
+            {
+                return serializedProperty.isArray;
+            }
+        }
+
         internal InspectorField(SerializedProperty property, Attribute[] attributes) : base(property.serializedObject, property, property.GetParentObject(), property.name, attributes)
         {
             this.displayName = property.displayName;
@@ -39,7 +49,7 @@ namespace AnnulusGames.LucidTools.Editor
 
         internal void InitializeChildProperties()
         {
-            _childProperties = InspectorPropertyUtil.GroupProperties(InspectorPropertyUtil.CreateChildProperties(this)).ToArray();
+            _childProperties = InspectorPropertyUtil.GroupProperties(InspectorPropertyUtil.CreateChildProperties(this));
         }
 
         internal override void Initialize()
@@ -90,86 +100,11 @@ namespace AnnulusGames.LucidTools.Editor
             using (var changeScope = new EditorGUI.ChangeCheckScope())
             {
                 if (!isEditable) EditorGUI.BeginDisabledGroup(true);
-                {
-                    LucidEditorUtility.PushIndentLevel(EditorGUI.indentLevel + this.indent);
-                    Rect foldoutRect = Rect.zero;
 
-                    if (isManagedReference)
-                    {
-                        foldoutRect = EditorGUILayout.GetControlRect();
-                        DrawSerializeReferenceField(foldoutRect, this);
+                LucidEditorUtility.PushIndentLevel(EditorGUI.indentLevel + this.indent);
+                DrawField();
+                LucidEditorUtility.PopIndentLevel();
 
-                        if (!hasChildren)
-                        {
-                            serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
-                            if (serializedProperty.isExpanded)
-                            {
-                                using (new EditorGUI.IndentLevelScope())
-                                {
-                                    EditorGUILayout.HelpBox("No type assigned.", MessageType.Info);
-                                }
-                            }
-                        }
-                    }
-
-                    if (hasChildren)
-                    {
-                        if (!isManagedReference) foldoutRect = EditorGUILayout.GetControlRect();
-
-                        if (_isInGroup)
-                        {
-                            using (new EditorGUI.IndentLevelScope())
-                            {
-                                foldoutRect.xMin -= 4f;
-                                serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
-                            }
-                        }
-                        else
-                        {
-                            serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
-                        }
-
-                        if (serializedProperty.isExpanded)
-                        {
-                            using (new EditorGUI.IndentLevelScope())
-                            {
-                                foreach (var child in childProperties.OrderBy(x => x.order))
-                                {
-                                    child.Draw();
-                                }
-                            }
-                        }
-                    }
-                    else if (!isManagedReference)
-                    {
-                        if (_isInGroup && serializedProperty.isArray && serializedProperty.propertyType != SerializedPropertyType.String) EditorGUI.indentLevel++;
-
-                        GUIContent label;
-                        if (hideLabel)
-                        {
-                            label = GUIContent.none;
-                        }
-                        else
-                        {
-                            label = new GUIContent(displayName);
-                        }
-
-                        if (LucidEditorUtility.horizontalGroupCount > 0 && serializedProperty.propertyType != SerializedPropertyType.Generic)
-                        {
-                            using (new EditorGUILayout.HorizontalScope())
-                            {
-                                GUILayout.Label(label, GUILayout.MinWidth(50f));
-                                EditorGUILayout.PropertyField(serializedProperty, GUIContent.none, true, GUILayout.MinWidth(0));
-                            }
-                        }
-                        else
-                        {
-                            EditorGUILayout.PropertyField(serializedProperty, label, true, GUILayout.MinWidth(0));
-                        }
-                    }
-                    LucidEditorUtility.PopIndentLevel();
-
-                }
                 if (!isEditable) EditorGUI.EndDisabledGroup();
 
                 _changed = changeScope.changed;
@@ -183,6 +118,87 @@ namespace AnnulusGames.LucidTools.Editor
             foreach (PropertyProcessor processor in processors) processor.OnAfterDrawProperty();
         }
 
+        private void DrawField()
+        {
+            Rect foldoutRect = Rect.zero;
+            if (isManagedReference)
+            {
+                foldoutRect = EditorGUILayout.GetControlRect();
+                DrawSerializeReferenceField(foldoutRect, this);
+
+                if (!hasChildren)
+                {
+                    serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
+                    if (serializedProperty.isExpanded)
+                    {
+                        using (new EditorGUI.IndentLevelScope())
+                        {
+                            EditorGUILayout.HelpBox("No type assigned.", MessageType.Info);
+                        }
+                    }
+                }
+            }
+            if (hasChildren)
+            {
+                if (!isManagedReference) foldoutRect = EditorGUILayout.GetControlRect();
+
+                if (_isInGroup)
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        foldoutRect.xMin -= 4f;
+                        serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
+                    }
+                }
+                else
+                {
+                    serializedProperty.isExpanded = EditorGUI.Foldout(foldoutRect, serializedProperty.isExpanded, displayName, true, EditorStyles.foldoutHeader);
+                }
+
+                if (serializedProperty.isExpanded)
+                {
+                    using (new EditorGUI.IndentLevelScope())
+                    {
+                        foreach (var child in childProperties.OrderBy(x => x.order))
+                        {
+                            child.Draw();
+                        }
+                    }
+                }
+            }
+            else if (!isManagedReference)
+            {
+                if (_isInGroup && serializedProperty.isArray && serializedProperty.propertyType != SerializedPropertyType.String) EditorGUI.indentLevel++;
+
+                GUIContent label;
+                if (hideLabel)
+                {
+                    label = GUIContent.none;
+                }
+                else
+                {
+                    label = new GUIContent(displayName);
+                }
+
+                if (LucidEditorUtility.horizontalGroupCount > 0 && serializedProperty.propertyType != SerializedPropertyType.Generic)
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        GUILayout.Label(label, GUILayout.MinWidth(50f));
+                        DrawNormalField(serializedProperty, GUIContent.none);
+                    }
+                }
+                else
+                {
+                    DrawNormalField(serializedProperty, label);
+                }
+            }
+        }
+
+        private void DrawNormalField(SerializedProperty property, GUIContent label)
+        {
+            EditorGUILayout.PropertyField(serializedProperty, label, true, GUILayout.MinWidth(0f));
+        }
         private void DrawSerializeReferenceField(Rect position, InspectorField property)
         {
             int maxTypePopupLineCount = 13;
