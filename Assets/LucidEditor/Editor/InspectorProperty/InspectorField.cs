@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEditorInternal;
+using AnnulusGames.LucidTools.Inspector;
 
 namespace AnnulusGames.LucidTools.Editor
 {
@@ -123,6 +124,12 @@ namespace AnnulusGames.LucidTools.Editor
 
         internal override void Draw()
         {
+            if (attributes.Any(x => x is DisableLucidEditorAttribute))
+            {
+                EditorGUILayout.PropertyField(serializedProperty);
+                return;
+            }
+
             foreach (PropertyProcessor processor in processors) processor.OnBeforeDrawProperty();
 
             if (isHidden) return;
