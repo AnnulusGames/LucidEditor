@@ -51,9 +51,16 @@ namespace AnnulusGames.LucidTools.Editor
 
         private void ResetProperties()
         {
-            foreach (InspectorProperty property in properties)
+            try
             {
-                property.Reset();
+                foreach (InspectorProperty property in properties)
+                {
+                    property.Reset();
+                }
+            }
+            catch (System.InvalidOperationException)
+            {
+                InitializeProperties();
             }
         }
 
