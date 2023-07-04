@@ -91,11 +91,11 @@ namespace AnnulusGames.LucidTools.Editor
     }
 
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(MonoBehaviour), true)]
+    [CustomEditor(typeof(MonoBehaviour), true, isFallback = true)]
     internal class MonoBehaviourEditor : LucidEditor { }
 
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(ScriptableObject), true)]
+    [CustomEditor(typeof(ScriptableObject), true, isFallback = true)]
     internal class ScriptableObjectEditor : LucidEditor { }
 
 }
