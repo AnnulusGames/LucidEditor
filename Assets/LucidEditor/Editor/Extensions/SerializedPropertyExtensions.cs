@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
@@ -203,8 +204,7 @@ namespace AnnulusGames.LucidTools.Editor
                         index = -1;
                     }
 
-                    var enumerable = (obj as IEnumerable<object>);
-                    obj = enumerable.ElementAtOrDefault(index);
+                    obj = GetElementAtOrDefault(obj, index);
 
                     i++;
                 }
@@ -214,6 +214,34 @@ namespace AnnulusGames.LucidTools.Editor
                 }
             }
             return (T)obj;
+        }
+
+        private static object GetElementAtOrDefault(object arrayOrListObj, int index)
+        {
+            if (arrayOrListObj is IEnumerable<object> referenceEnumerable)
+            {
+                return referenceEnumerable.ElementAtOrDefault(index);
+            }
+
+            var valueList = arrayOrListObj as IList;
+            if (valueList != null)
+            {
+                object returnObj = null;
+                if (index < 0 || index >= valueList.Count)
+                {
+                    Type listType = valueList.GetType();
+                    Type elementType = listType.IsArray ? listType.GetElementType() : listType.GetGenericArguments()[0];
+                    returnObj = Activator.CreateInstance(elementType);
+                }
+                else
+                {
+                    returnObj = valueList[index];
+                }
+
+                return returnObj;
+            }
+
+            throw new ArgumentException($"Can't parse {arrayOrListObj.GetType()} as Array or List");
         }
 
         public static object GetParentObject(this SerializedProperty property)
