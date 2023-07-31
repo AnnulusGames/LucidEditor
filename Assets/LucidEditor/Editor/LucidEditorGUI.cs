@@ -923,9 +923,9 @@ namespace AnnulusGames.LucidTools.Editor
             EditorGUI.BeginChangeCheck();
         }
 
-        public static void EndChangeCheck()
+        public static bool EndChangeCheck()
         {
-            EditorGUI.EndChangeCheck();
+            return EditorGUI.EndChangeCheck();
         }
 
         public static GUIContent BeginProperty(Rect totalPosition, GUIContent label, SerializedProperty property)
