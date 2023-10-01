@@ -30,8 +30,10 @@ Lucid EditorはUnityのInspectorをカスタマイズし、属性を用いた強
 1. Window > Package ManagerからPackage Managerを開く
 2. 「+」ボタン > Add package from git URL
 3. 以下を入力する
-   * https://github.com/AnnulusGames/LucidEditor.git?path=/Assets/LucidEditor
 
+```
+https://github.com/AnnulusGames/LucidEditor.git?path=/Assets/LucidEditor
+```
 
 あるいはPackages/manifest.jsonを開き、dependenciesブロックに以下を追記
 
