@@ -30,8 +30,10 @@ The Lucid Editor customizes Unity's Inspector and enables powerful editor extens
 1. Open the Package Manager from Window > Package Manager
 2. "+" button > Add package from git URL
 3. Enter the following to install
-   * https://github.com/AnnulusGames/LucidEditor.git?path=/Assets/LucidEditor
 
+```
+https://github.com/AnnulusGames/LucidEditor.git?path=/Assets/LucidEditor
+```
 
 or open Packages/manifest.json and add the following to the dependencies block.
 
