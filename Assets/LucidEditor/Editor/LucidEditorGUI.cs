@@ -137,7 +137,7 @@ namespace AnnulusGames.LucidTools.Editor
                     return (object)ColorField(position, label, (Color)value);
                 case Type t when t == typeof(Gradient):
                     return (object)GradientField(position, label, (Gradient)value);
-                case Type t when t == typeof(Enum):
+                case Type t when t == typeof(Enum) || t.IsEnum:
                     return (object)EnumPopup(position, label, (Enum)value);
                 case Type t when t == typeof(AnimationCurve):
                     return (object)CurveField(position, label, (AnimationCurve)value);
@@ -213,7 +213,7 @@ namespace AnnulusGames.LucidTools.Editor
                 case Type t when t == typeof(Gradient):
                     GradientField(position, label, (Gradient)value);
                     break;
-                case Type t when t == typeof(Enum):
+                case Type t when t == typeof(Enum) || t.IsEnum:
                     EnumPopup(position, label, (Enum)value);
                     break;
                 case Type t when t == typeof(AnimationCurve):
