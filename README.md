@@ -7,6 +7,10 @@ Powerful Editor Extensions for Unity
 
 [日本語版READMEはこちら](README_JP.md)
 
+## Migrating to Alchemy
+
+Due to the release of a new Inspector extension library [Alchemy](https://github.com/AnnulusGames/Alchemy), this library will no longer be supported. If you are using this, please consider migrating to Alchemy.
+
 ## Overview
 The Lucid Editor customizes Unity's Inspector and enables powerful editor extensions using attributes. Over 30 attributes will be available to make the Inspector easier to use, and many more features will be added to make it easier to extend the editor.
 

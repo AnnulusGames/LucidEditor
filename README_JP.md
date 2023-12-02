@@ -7,6 +7,10 @@ Powerful Editor Extensions for Unity
 
 [English README](README.md)
 
+## Alchemyへの移行
+
+新たなInspector拡張ライブラリの[Alchemy](https://github.com/AnnulusGames/Alchemy)をリリースしたため、今後このライブラリはサポートされなくなります。こちらをお使いの場合はAlchemyへの移行を検討してください。
+
 ## 概要
 Lucid EditorはUnityのInspectorをカスタマイズし、属性を用いた強力なエディタ拡張を可能にします。Inspectorの扱いやすさを向上させる30以上の属性が利用可能になるほか、エディタ拡張を簡単に行うための機能も多数追加されます。
 
